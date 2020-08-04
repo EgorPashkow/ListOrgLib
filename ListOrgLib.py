@@ -3,8 +3,8 @@ from lxml import html
 
 class Organization:
     def __init__(self):
-        self.link = None
-        self.company_name = None
+        self.url = None
+        self.organization_name = None
         self.leader = None
         self.INNKPP = None
         self.authorized_capital = None
@@ -33,7 +33,7 @@ class Organization:
         self.OKATO = None
 
         self.report = None
-        
+
 class Report:
     def __init__(self):
         self.years = []
@@ -49,7 +49,7 @@ class Report:
             res[i] = self.data[i][index]
         return res
     
-    def get_by_year_and_key(self, key, year):
+    def get_by_key_and_year(self, key, year):
         index = self.years.index(str(year))
         return self.data[key][index]
     
@@ -58,8 +58,8 @@ class Report:
 
 class SearchResult:
     def __init__(self):
-        self.link = None
-        self.company_name = None
+        self.url = None
+        self.organization_name = None
         self.status = None
         self.type = None
         self.leader = None
@@ -67,19 +67,19 @@ class SearchResult:
         self.address = None
         
     def get_profile(self, report=True):
-        return Parser().parse(self.Link, report)
+        return Parser().parse(self.url, report)
 
 class SearchResultWithType:
     def __init__(self):
-        self.link = None
-        self.company_name = None
+        self.url = None
+        self.organization_name = None
         self.status = None
         self.type = None
         self.INN = None
         self.address = None
         
     def get_profile(self, report=True):
-        return Parser().parse(self.Link, report)
+        return Parser().parse(self.url, report)
 
 def get_text(root, arg):
     try:
@@ -98,9 +98,9 @@ class Parser:
         res = Organization()
         page = requests.get(url, headers=self.headers)
         root = html.fromstring(page.text)
-        res.Link = url
+        res.url = url
         
-        res.company_name = get_text(root, "/html/body/div/div[2]/div[3]/p/a")
+        res.organization_name = get_text(root, "/html/body/div/div[2]/div[3]/p/a")
         
         res.leader = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[1]/td[2]/a")
         res.INNKPP = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[2]/td[2]")
@@ -162,8 +162,8 @@ class Parser:
                 span_length = len(root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/span"))
                 try:
                     temp = SearchResult()
-                    temp.link = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].get("href")
-                    temp.company_name = root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].text_content()
+                    temp.url = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].get("href")
+                    temp.organization_name = root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].text_content()
                     if(span_length == 2):
                         temp.status = "НЕ ДЕЙСТВУЮЩЕЕ"
                     else:
@@ -185,8 +185,8 @@ class Parser:
                 span_length = len(root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/span"))
                 try:
                     temp = SearchResultWithType()
-                    temp.link = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].get("href")
-                    temp.company_name = root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].text_content()
+                    temp.url = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].get("href")
+                    temp.organization_name = root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/a")[0].text_content()
                     if(span_length == 2):
                         temp.status = "НЕ ДЕЙСТВУЮЩЕЕ"
                     else:
@@ -210,7 +210,6 @@ class Parser:
             page += 1
         return res[:limit]
     
-    
     def get_OKATO(self, num_OKATO, limit=100):
         def handle_page(page):
             page = requests.get("https://www.list-org.com/list?okato=%s&page=%s" % (str(num_OKATO), str(page)), headers=self.headers)
@@ -221,8 +220,8 @@ class Parser:
                 span_length = len(root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/span"))
                 try:
                     temp = SearchResultWithType()
-                    temp.link = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].get("href")
-                    temp.company_name = root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].text_content()
+                    temp.url = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].get("href")
+                    temp.organization_name = root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].text_content()
                     if(span_length == 2):
                         temp.status = "НЕ ДЕЙСТВУЮЩЕЕ"
                     else:
@@ -253,8 +252,8 @@ class Parser:
                 span_length = len(root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/span"))
                 try:
                     temp = SearchResultWithType()
-                    temp.link = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].get("href")
-                    temp.company_name = root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].text_content()
+                    temp.url = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].get("href")
+                    temp.organization_name = root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/a")[0].text_content()
                     if(span_length == 2):
                         temp.status = "НЕ ДЕЙСТВУЮЩЕЕ"
                     else:
@@ -285,8 +284,8 @@ class Parser:
                 span_length = len(root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]/label/span"))
                 try:
                     temp = SearchResultWithType()
-                    temp.link = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]/label/a")[0].get("href")
-                    temp.company_name = root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]/label/a")[0].text_content()
+                    temp.url = "https://www.list-org.com" + root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]/label/a")[0].get("href")
+                    temp.organization_name = root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]/label/a")[0].text_content()
                     if(span_length == 2):
                         temp.status = "НЕ ДЕЙСТВУЮЩЕЕ"
                     else:
