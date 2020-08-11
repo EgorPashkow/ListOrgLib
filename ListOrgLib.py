@@ -90,6 +90,38 @@ def get_text(root, arg):
     except IndexError:
         return None
 
+def get_from_dict(input_dict, key):
+    try:
+        return input_dict[key]
+    except KeyError:
+        return None
+
+def get_element_by_text(root, element_text):
+    return root.xpath("//*[. = '" + element_text + "']")
+
+def clean_string(string):
+    return " ".join(string.strip().replace("  ", " ").split())
+
+def parse_p(root, element_text):
+    res = dict()
+    elements = get_element_by_text(root, element_text)
+    if elements is not None:
+        element = elements[0]
+        next_element = element.getnext()
+        for i in next_element.xpath(".//p"):
+            res[clean_string(i.xpath(".//i")[0].text_content())] = clean_string(" ".join(i.xpath(".//text()[not(self::i)]")[1:]))
+    return res
+
+def parse_table(root, element_text):
+    res = dict()
+    elements = get_element_by_text(root, element_text)
+    if elements is not None:
+        element = elements[0]
+        next_element = element.getnext()
+        for i in next_element.xpath(".//table/tr"):
+            res[clean_string(i.xpath(".//td")[0].text_content())] = clean_string(i.xpath(".//td")[1].text_content())
+    return res
+
 class Parser:
     def __init__(self):
         self.headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -100,34 +132,37 @@ class Parser:
         root = html.fromstring(page.text)
         res.url = url
         
-        res.organization_name = get_text(root, "/html/body/div/div[2]/div[3]/p/a")
+        res.organization_name = get_element_by_text(root, "Полное юридическое наименование:")[0].getnext().text
         
-        res.leader = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[1]/td[2]/a")
-        res.INNKPP = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[2]/td[2]")
-        res.authorized_capital = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[3]/td[2]")
-        res.number_of_staff = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[4]/td[2]")
-        res.number_of_founders = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[5]/td[2]")
-        res.registration_date = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[1]/td[2]/a")
-        res.status = get_text(root, "/html/body/div/div[2]/div[3]/table/tr[7]/td[2]")
+        general_information = parse_table(root, "Общие сведения:Дерево связейНа картеОтчетность")
+        res.leader = get_from_dict(general_information, 'Руководитель:')
+        res.INNKPP = get_from_dict(general_information, 'ИНН / КПП:')
+        res.authorized_capital = get_from_dict(general_information, 'Уставной капитал:')
+        res.number_of_staff = get_from_dict(general_information, 'Численность персонала:')
+        res.number_of_founders = get_from_dict(general_information, 'Количество учредителей:')
+        res.registration_date = get_from_dict(general_information, 'Дата регистрации:')
+        res.status = get_from_dict(general_information, 'Статус:')
         
-        res.index = get_text(root, "/html/body/div/div[2]/div[6]/p[1]/text()")
-        res.address = get_text(root, "/html/body/div/div[2]/div[6]/p[2]/span")
-        res.coordinates = get_text(root, "/html/body/div/div[2]/div[6]/p[3]/a")
-        res.legal_address = get_text(root, "/html/body/div/div[2]/div[6]/p[4]/span")
-        res.phone = get_text(root, "/html/body/div/div[2]/div[6]/p[5]/a[1]")
-        res.fax = get_text(root, "/html/body/div/div[2]/div[6]/p[6]/a")
-        res.email = get_text(root, "/html/body/div/div[2]/div[6]/p[7]/a")
-        res.website = get_text(root, "/html/body/div/div[2]/div[6]/div/p/a")
-
-        res.INN = get_text(root, "/html/body/div/div[2]/div[8]/p[1]/text()")
-        res.KPP = get_text(root, "/html/body/div/div[2]/div[8]/p[2]/text()")
-        res.OKPO = get_text(root, "/html/body/div/div[2]/div[8]/p[3]/span")
-        res.OGRN = get_text(root, "/html/body/div/div[2]/div[8]/p[4]/text()")
-        res.OKFS = get_text(root, "/html/body/div/div[2]/div[8]/p[5]/text()")
-        res.OKOGU = get_text(root, "/html/body/div/div[2]/div[8]/p[6]/text()")
-        res.OKOPF = get_text(root, "/html/body/div/div[2]/div[8]/p[7]/text()")
-        res.OKTMO = get_text(root, "/html/body/div/div[2]/div[8]/p[8]/text()")
-        res.OKATO = get_text(root, "/html/body/div/div[2]/div[8]/p[9]/a") + get_text(root, "/html/body/div/div[2]/div[8]/p[9]/text()")
+        contacts = parse_p(root, "Контактная информация:")
+        res.index = get_from_dict(contacts, 'Индекс:')
+        res.address = get_from_dict(contacts, 'Адрес:')
+        res.coordinates = get_from_dict(contacts, 'GPS координаты:')
+        res.legal_address = get_from_dict(contacts, 'Юридический адрес:')
+        res.phone = get_from_dict(contacts, 'Телефон:')
+        res.fax = get_from_dict(contacts, 'Факс:')
+        res.email = get_from_dict(contacts, 'E-mail:')
+        res.website = get_from_dict(contacts, 'Сайт:')
+        
+        requisites = parse_p(root, "Реквизиты компании:")
+        res.INN = get_from_dict(requisites, 'ИНН:')
+        res.KPP = get_from_dict(requisites, 'КПП:')
+        res.OKPO = get_from_dict(requisites, 'ОКПО:')
+        res.OGRN = get_from_dict(requisites, 'ОГРН:')
+        res.OKFS = get_from_dict(requisites, 'ОКФС:')
+        res.OKOGU = get_from_dict(requisites, 'ОКОГУ:')
+        res.OKOPF = get_from_dict(requisites, 'ОКОПФ:')
+        res.OKTMO = get_from_dict(requisites, 'ОКТМО:')
+        res.OKATO = get_from_dict(requisites, 'ОКАТО:')
         
         if report:
             res.report = self.parse_report(url)
