@@ -1,8 +1,11 @@
 # ListOrgLib
-Library for convenient parsing of data from the site list-org.com
+Library provides a pure Python interface for list-org.com site.
 
-## Requirements
-- lxml
+It works with Python 3 versions.
+
+The library does not use the site api.
+
+The site list-org.com provides full data on organizations - registration information, contacts, details, founders, statistical indicators - financial, accounting, production results.
 
 ## Examples
 Get organization by link
@@ -14,7 +17,7 @@ for i in res:
     print(i, " : ", res[i])
 ```
 
-Get the organization's reporting
+Get the organization reporting
 ```python
 ListOrgParser = Parser()
 org = ListOrgParser.parse_report("https://www.list-org.com/company/1")
@@ -28,3 +31,6 @@ ListOrgParser = Parser()
 orgs = ListOrgParser.search("4631002737", search_type="inn", limit=10)
 print(orgs[0].organization_name)
 ```
+
+## Requirements
+- [lxml](https://lxml.de/)
