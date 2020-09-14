@@ -34,3 +34,8 @@ print(orgs[0].organization_name)
 
 ## Requirements
 - [lxml](https://lxml.de/)
+
+## Install
+To install, you need to copy ListOrgLib.py to the project folder.
+
+After that just import: ```from ListOrgLib import Parser```
