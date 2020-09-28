@@ -33,6 +33,9 @@ class Organization:
         self.OKATO = None
 
         self.report = None
+    
+    def __str__(self):
+        return str(vars(self))
 
 class Report:
     def __init__(self):
@@ -55,6 +58,27 @@ class Report:
     
     def get_keys(self):
         return list(self.data.keys())
+    
+    def __str__(self):
+        return str(vars(self))
+
+class Man:
+    def __init__(self):
+        self.url = None
+        self.name = None
+        self.INN = None
+        self.leader = []
+        self.founder = []
+        
+        self.ORGN = None
+        self.status = None
+        self.registration_date = None
+        self.legal_address = None
+        self.OKVED = None
+        self.adding_OKVED = []
+        
+    def __str__(self):
+        return str(vars(self))
 
 class SearchResult:
     def __init__(self):
@@ -65,6 +89,9 @@ class SearchResult:
         self.leader = None
         self.INN = None
         self.address = None
+    
+    def __str__(self):
+        return str(vars(self))
         
     def get_profile(self, report=True):
         return Parser().parse(self.url, report)
@@ -77,6 +104,9 @@ class SearchResultWithType:
         self.type = None
         self.INN = None
         self.address = None
+        
+    def __str__(self):
+        return str(vars(self))
         
     def get_profile(self, report=True):
         return Parser().parse(self.url, report)
@@ -134,7 +164,11 @@ class Parser:
         
         res.organization_name = get_element_by_text(root, "Полное юридическое наименование:")[0].getnext().text
         
-        general_information = parse_table(root, "Общие сведения:Дерево связейНа картеОтчетность")
+        try:
+            general_information = parse_table(root, "Общие сведения:Дерево связейНа картеОтчетность")#################
+        except IndexError:
+            general_information = parse_table(root, "Общие сведения:Дерево связейНа карте")
+        
         res.leader = get_from_dict(general_information, 'Руководитель:')
         res.INNKPP = get_from_dict(general_information, 'ИНН / КПП:')
         res.authorized_capital = get_from_dict(general_information, 'Уставной капитал:')
@@ -171,6 +205,8 @@ class Parser:
     def parse_report(self, url):
         res = Report()
         page = requests.get(url + "/report", headers=self.headers)
+        if page.status_code != 200:
+            return None
         root = html.fromstring(page.text)
         temp = []
         for i in range(4, len(root.xpath("/html/body/div/div[2]/table/tr[2]")[0].getchildren()) + 1):
@@ -191,7 +227,7 @@ class Parser:
         def handle_page(query, page):
             page = requests.get("https://www.list-org.com/search?type=all&val=%s&page=%s" % (str(query), str(page)), headers=self.headers)
             root = html.fromstring(page.text)
-            for i in range(1, 100 + 10):
+            for i in range(1, 101):
                 if(len(root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]")) == 0):
                     raise IndexError()
                 span_length = len(root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/span"))
@@ -214,7 +250,7 @@ class Parser:
         def handle_page_with_type(search_type, query, page):
             page = requests.get("https://www.list-org.com/search?type=%s&val=%s&page=%s" % (str(search_type), str(query), str(page)), headers=self.headers)
             root = html.fromstring(page.text)
-            for i in range(1, 100 + 10):
+            for i in range(1, 101):
                 if(len(root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]")) == 0):
                     raise IndexError()
                 span_length = len(root.xpath("/html/body/div/div[2]/div[1]/p[" + str(i) + "]/label/span"))
@@ -249,7 +285,9 @@ class Parser:
         def handle_page(page):
             page = requests.get("https://www.list-org.com/list?okato=%s&page=%s" % (str(num_OKATO), str(page)), headers=self.headers)
             root = html.fromstring(page.text)
-            for i in range(1, 34):
+            if(page.url == "https://www.list-org.com/bot"):
+                print("Смени ip")
+            for i in range(1, 33):
                 if(len(root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]")) == 0):
                     raise IndexError()
                 span_length = len(root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/span"))
@@ -281,7 +319,7 @@ class Parser:
         def handle_page(page):
             page = requests.get("https://www.list-org.com/list?okved2=%s&page=%s" % (str(num_OKVED), str(page)), headers=self.headers)
             root = html.fromstring(page.text)
-            for i in range(1, 34):
+            for i in range(1, 33):
                 if(len(root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]")) == 0):
                     raise IndexError()
                 span_length = len(root.xpath("/html/body/div/div[2]/div[2]/p[" + str(i) + "]/label/span"))
@@ -313,7 +351,7 @@ class Parser:
         def handle_page(page):
             page = requests.get("https://www.list-org.com/search?type=similar&okved=%s&okato=%s&page=%s" % (str(num_OKVED), str(num_OKATO), str(page)), headers=self.headers)
             root = html.fromstring(page.text)
-            for i in range(1, 100 + 10):
+            for i in range(1, 101):
                 if(len(root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]")) == 0):
                     raise IndexError()
                 span_length = len(root.xpath("/html/body/div/div[2]/div/p[" + str(i) + "]/label/span"))
